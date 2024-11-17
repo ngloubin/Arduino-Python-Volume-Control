@@ -1,0 +1,36 @@
+import serial
+import subprocess
+
+# Configure the serial port
+arduino_port = "/dev/ttyUSB0"  # Make sure the port is correct
+baud_rate = 9600  # The same baud rate defined in the Arduino code
+
+# Open serial communication
+ser = serial.Serial(arduino_port, baud_rate, timeout=1)
+
+while True:
+    try:
+        # Read the value from Arduino (errors ignored during decoding)
+        value = ser.readline().decode('utf-8', errors='ignore').strip()
+        
+        if value:
+            # Try to convert the value to an integer
+            try:
+                pot_value = int(value)
+                
+                # Map the value to 0-100 (volume percentage)
+                volume = int((pot_value / 1023) * 100)
+                
+                # Display the potentiometer value and the volume
+                print(f"Potentiometer: {pot_value} -> Volume: {volume}%")
+                
+                # Use amixer to adjust the system volume
+                subprocess.run(["amixer", "set", "Master", f"{volume}%"])
+            
+            except ValueError:
+                # If the value can't be converted to an integer, ignore it
+                print(f"Invalid value received: {value}")
+    
+    except serial.SerialException as e:
+        print(f"Serial communication error: {e}")
+        break
