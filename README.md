@@ -30,4 +30,5 @@ Este projeto implementa um mixer de volume que controla o volume geral do sistem
 1. Clone este repositório ou copie os arquivos do projeto.
 2. Instale as dependências Python executando:
    ```bash
-   pip install pycaw comtypes
+   pip install pycaw comtypes # só para windows 
+   pip install serial
