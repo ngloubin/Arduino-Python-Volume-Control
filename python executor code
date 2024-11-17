@@ -1,0 +1,47 @@
+import serial
+from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+from comtypes import CLSCTX_ALL
+
+# Configure the serial port
+arduino_port = "COM6"  # Adjust to the correct port in Device Manager
+baud_rate = 9600  # Same rate set in the Arduino code
+ser = serial.Serial(arduino_port, baud_rate, timeout=1)
+
+# Initialize the volume control
+devices = AudioUtilities.GetSpeakers()
+interface = devices.Activate(
+    IAudioEndpointVolume._iid_, CLSCTX_ALL, None
+)
+volume = interface.QueryInterface(IAudioEndpointVolume)
+
+print("Volume control started. Adjust the potentiometer on the Arduino to change the volume of the system.")
+
+while True:
+    try:
+        # Read serial port data
+        value = ser.readline().decode('utf-8', errors='ignore').strip()
+        if value:
+            try:
+                # Convert the value of the potentiometer to integer
+                pot_value = int(value)
+                
+                # Map the value to 0.0 to 1.0 (scale required by PyCaw)
+                volume_value = (pot_value / 1023)  # Arduino potentiometer range is 0-1023
+
+                # Adjust the system volume
+                volume.SetMasterVolumeLevelScalar(volume_value, None)
+
+                # Print the potentiometer value and the system volume percentage
+                print(f"Potentiometer: {pot_value} -> Volume: {volume_value * 100:.2f}%")
+            except ValueError:
+                print(f"Invalid value received: {value}")
+    except serial.SerialException as e:
+        print(f"Serial communication error: {e}")
+        break
+    except KeyboardInterrupt:
+        print("\nExiting the program...")
+        break
+
+# Close the serial communication
+ser.close()
+print("Serial communication closed.")
